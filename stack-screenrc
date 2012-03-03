@@ -1,0 +1,31 @@
+sessionname stack
+hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%< %= %H"
+screen -t stack bash
+screen -t g-reg bash
+stuff "cd /opt/stack/glance; bin/glance-registry --config-file=etc/glance-registry.conf"
+screen -t g-api bash
+stuff "cd /opt/stack/glance; bin/glance-api --config-file=etc/glance-api.conf"
+screen -t key bash
+stuff "cd /opt/stack/keystone && /opt/stack/keystone/bin/keystone-all --config-file /opt/stack/keystone/etc/keystone.conf  -d --debug"
+screen -t n-api bash
+stuff "cd /opt/stack/nova && /opt/stack/nova/bin/nova-api"
+screen -t n-cpu bash
+stuff "cd /opt/stack/nova && sg libvirtd /opt/stack/nova/bin/nova-compute"
+screen -t n-crt bash
+stuff "cd /opt/stack/nova && /opt/stack/nova/bin/nova-cert"
+screen -t n-obj bash
+stuff "cd /opt/stack/nova && /opt/stack/nova/bin/nova-objectstore"
+screen -t n-vol bash
+stuff "cd /opt/stack/nova && /opt/stack/nova/bin/nova-volume"
+screen -t n-net bash
+stuff "cd /opt/stack/nova && /opt/stack/nova/bin/nova-network"
+screen -t n-sch bash
+stuff "cd /opt/stack/nova && /opt/stack/nova/bin/nova-scheduler"
+screen -t n-novnc bash
+stuff "cd /opt/stack/noVNC && ./utils/nova-novncproxy --flagfile /etc/nova/nova.conf --web ."
+screen -t n-xvnc bash
+stuff "cd /opt/stack/nova && ./bin/nova-xvpvncproxy --flagfile /etc/nova/nova.conf"
+screen -t n-cauth bash
+stuff "cd /opt/stack/nova && ./bin/nova-consoleauth"
+screen -t horizon bash
+stuff "cd /opt/stack/horizon && sudo tail -f /var/log/apache2/error.log"

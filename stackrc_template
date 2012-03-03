@@ -1,0 +1,87 @@
+# compute service
+NOVA_REPO=%BASESRC%/cache/stack/nova
+NOVA_BRANCH=master
+
+# storage service
+SWIFT_REPO=%BASESRC%/cache/stack/swift
+SWIFT_BRANCH=master
+
+# swift and keystone integration
+SWIFT_KEYSTONE_REPO=%BASESRC%/cache/stack/swift-keystone2
+SWIFT_KEYSTONE_BRANCH=master
+
+# image catalog service
+GLANCE_REPO=%BASESRC%/cache/stack/glance
+GLANCE_BRANCH=master
+
+# unified auth system (manages accounts/tokens)
+KEYSTONE_REPO=%BASESRC%/cache/stack/keystone
+KEYSTONE_BRANCH=master
+
+# a websockets/html5 or flash powered VNC console for vm instances
+NOVNC_REPO=%BASESRC%/cache/stack/noVNC
+NOVNC_BRANCH=master
+
+# django powered web control panel for openstack
+HORIZON_REPO=%BASESRC%/cache/stack/horizon
+HORIZON_BRANCH=master
+
+# python client library to nova that horizon (and others) use
+NOVACLIENT_REPO=%BASESRC%/cache/stack/python-novaclient
+NOVACLIENT_BRANCH=master
+
+# python keystone client library to nova that horizon uses
+KEYSTONECLIENT_REPO=%BASESRC%/cache/stack/python-keystoneclient
+KEYSTONECLIENT_BRANCH=master
+
+# quantum service
+QUANTUM_REPO=%BASESRC%/cache/stack/quantum
+QUANTUM_BRANCH=master
+
+# quantum client
+QUANTUM_CLIENT_REPO=%BASESRC%/cache/stack/python-quantumclient
+QUANTUM_CLIENT_BRANCH=master
+
+# Tempest test suite
+TEMPEST_REPO=%BASESRC%/cache/stack/tempest
+TEMPEST_BRANCH=master
+
+# melange service
+MELANGE_REPO=%BASESRC%/cache/stack/melange
+MELANGE_BRANCH=master
+
+# python melange client library
+MELANGECLIENT_REPO=%BASESRC%/cache/stack/python-melangeclient
+MELANGECLIENT_BRANCH=master
+
+# Specify a comma-separated list of uec images to download and install into glance.
+# supported urls here are:
+#  * "uec-style" images:
+#     If the file ends in .tar.gz, uncompress the tarball and and select the first
+#     .img file inside it as the image.  If present, use "*-vmlinuz*" as the kernel
+#     and "*-initrd*" as the ramdisk
+#     example: http://cloud-images.ubuntu.com/releases/oneiric/release/ubuntu-11.10-server-cloudimg-amd64.tar.gz
+#  * disk image (*.img,*.img.gz)
+#    if file ends in .img, then it will be uploaded and registered as a to
+#    glance as a disk image.  If it ends in .gz, it is uncompressed first.
+#    example:
+#      http://cloud-images.ubuntu.com/releases/oneiric/release/ubuntu-11.10-server-cloudimg-armel-disk1.img
+#      http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-rootfs.img.gz
+#IMAGE_URLS="http://smoser.brickies.net/ubuntu/ttylinux-uec/ttylinux-uec-amd64-11.2_2.6.35-15_1.tar.gz" # old ttylinux-uec image
+#IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img" # cirros full disk image
+case "$LIBVIRT_TYPE" in
+    lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc
+        IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-rootfs.img.gz";;
+    *)  # otherwise, use the uec style image (with kernel, ramdisk, disk)
+        IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-uec.tar.gz,http://cloud-images.ubuntu.com/releases/oneiric/release/oneiric-server-cloudimg-amd64.tar.gz";;
+esac
+
+# use stored ec2 env variables
+if [ -f ./ec2rc ]; then
+    source ./ec2rc
+fi
+
+# allow local overrides of env variables
+if [ -f ./localrc ]; then
+    source ./localrc
+fi
