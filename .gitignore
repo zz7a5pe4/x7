@@ -2,3 +2,5 @@ proto
 *~
 *.log
 src
+functions
+stackrc
