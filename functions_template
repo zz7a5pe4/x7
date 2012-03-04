@@ -71,7 +71,7 @@ function git_clone {
 # pip_install package [package ...]
 function pip_install {
     [[ "$OFFLINE" = "True" ]] && return
-    sudo PIP_DOWNLOAD_CACHE=/home/w/x7/cache/pip \
+    sudo PIP_DOWNLOAD_CACHE=%PIPLOCALCACHE% \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
         pip install $@
