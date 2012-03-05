@@ -551,7 +551,7 @@ function get_packages() {
 # install apt requirements
 #apt_get update
 apt_get install $(get_packages)
-
+apt_get install python-prettytable
 # install python requirements
 pip_install `cat $FILES/pips/* | uniq`
 
