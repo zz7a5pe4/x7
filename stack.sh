@@ -550,7 +550,7 @@ function get_packages() {
 
 # install apt requirements
 #apt_get update
-#apt_get install $(get_packages)
+apt_get install $(get_packages)
 
 # install python requirements
 pip_install `cat $FILES/pips/* | uniq`

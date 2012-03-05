@@ -4,12 +4,9 @@
 # apt-get wrapper to set arguments correctly
 # apt_get package [package ...]
 function apt_get() {
-    [[ "$OFFLINE" = "True" ]] && return
-    local sudo="sudo"
-    [[ "$(id -u)" = "0" ]] && sudo="env"
-    $sudo DEBIAN_FRONTEND=noninteractive \
+        sudo DEBIAN_FRONTEND=noninteractive \
         http_proxy=$http_proxy https_proxy=$https_proxy \
-        apt-get --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
+        apt-get -y --option "Dpkg::Options::=--force-confold" --force-yes "$@"
 }
 
 

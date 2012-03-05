@@ -1,5 +1,7 @@
 #!/bin/bash
 
+MYID=x
+
 if [ -f ./INITDONE ]
   then
     echo "Please remove ./INITDONE first if you DO need to re-init"
@@ -20,28 +22,41 @@ if [[ $EUID -ne 0 ]]; then
     exit -1
 fi
 
-MYID=q
 PWD=`pwd`
 PWD=`dirname $PWD`
 
 
-chmod +w /etc/sudoers
-echo "$MYID ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-chmod -w /etc/sudoers
+grep "^$MYID ALL=(ALL) NOPASSWD: ALL$" /etc/sudoers > /dev/null
+if [ "$?" -ne "0" ];
+  then
+    chmod +w /etc/sudoers
+    echo "$MYID ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    chmod -w /etc/sudoers
+  else
+    echo "already in sudoer"
+fi
 
 cp -f ./stackrc_template ./stackrc
 sed -e "s|%BASESRC%|$PWD|g" -i ./stackrc
+chown $MYID ./stackrc
 
 cp -f ./functions_template ./functions
 sed -e "s|%PIPLOCALCACHE%|$PWD/cache/pip|g" -i ./functions
+chown $MYID ./functions
 
-#sed -e "s|%BASESRC%|$PWD|g" -i ./restart_stack.sh
-apt-get update
-cp -rf $PWD/cache/apt /var/cache/
+grep "^deb file://$PWD/cache/apt/ /$" /etc/apt/sources.list > /dev/null
+if [ "$?" -ne "0" ];
+  then
+    echo "deb file://$PWD/cache/apt/ /" >> /etc/apt/sources.list
+  else
+    echo "already in source.list"
+fi
+
+apt-get update > /dev/null
+#cp -rf $PWD/cache/apt /var/cache/
 
 
 echo "Done"
 touch ./INITDONE
-
-
+exit 0
 
