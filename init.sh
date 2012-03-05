@@ -1,6 +1,18 @@
 #!/bin/bash
 
-MYID=x
+
+chk_root () {
+
+  if [ ! $( id -u ) -eq 0 ]; then
+    echo "Please enter root's password."
+    exec sudo su -c "${0} ${CMDLN_ARGS}" # Call this prog as root
+    exit ${?}  # sice we're 'execing' above, we wont reach this exit
+               # unless something goes wrong.
+  fi
+
+}
+
+MYID=`whoami`
 
 if [ -f ./INITDONE ]
   then
@@ -9,18 +21,7 @@ if [ -f ./INITDONE ]
     exit -1
 fi
 
-if [ -z $1 ]
-  then
-    echo "you need a user id as parameter."
-    echo "FAILED"
-    exit -1
-fi
-
-if [[ $EUID -ne 0 ]]; then
-    echo "you shoud run this script as root(sudo ./init.sh USERID	)"
-    echo "FAILED"
-    exit -1
-fi
+chk_root 
 
 PWD=`pwd`
 PWD=`dirname $PWD`
@@ -52,9 +53,8 @@ if [ "$?" -ne "0" ];
     echo "already in source.list"
 fi
 
-apt-get update > /dev/null
-#cp -rf $PWD/cache/apt /var/cache/
-
+apt-get update 
+#apt-get update > /dev/null
 
 echo "Done"
 touch ./INITDONE
