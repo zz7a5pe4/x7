@@ -23,8 +23,8 @@ fi
 
 chk_root 
 
-PWD=`pwd`
-PWD=`dirname $PWD`
+CURWD=`pwd`
+CURWD=`dirname $CURWD`
 
 
 grep "^$MYID ALL=(ALL) NOPASSWD: ALL$" /etc/sudoers > /dev/null
@@ -38,17 +38,17 @@ if [ "$?" -ne "0" ];
 fi
 
 cp -f ./stackrc_template ./stackrc
-sed -e "s|%BASESRC%|$PWD|g" -i ./stackrc
+sed -e "s|%BASESRC%|$CURWD|g" -i ./stackrc
 chown $MYID ./stackrc
 
 cp -f ./functions_template ./functions
-sed -e "s|%PIPLOCALCACHE%|$PWD/cache/pip|g" -i ./functions
+sed -e "s|%PIPLOCALCACHE%|$CURWD/cache/pip|g" -i ./functions
 chown $MYID ./functions
 
-grep "^deb file://$PWD/cache/apt/ /$" /etc/apt/sources.list > /dev/null
+grep "^deb file://$CURWD/cache/apt/ /$" /etc/apt/sources.list > /dev/null
 if [ "$?" -ne "0" ];
   then
-    echo "deb file://$PWD/cache/apt/ /" >> /etc/apt/sources.list
+    echo "deb file://$CURWD/cache/apt/ /" >> /etc/apt/sources.list
   else
     echo "already in source.list"
 fi

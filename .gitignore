@@ -4,3 +4,8 @@ proto
 src
 functions
 stackrc
+cirros-0.3.0-x86_64-uec
+oneiric-server-cloudimg-amd64
+INITDONE
+ec2rc
+localrc

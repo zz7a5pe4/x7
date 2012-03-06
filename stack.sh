@@ -552,6 +552,17 @@ function get_packages() {
 #apt_get update
 apt_get install $(get_packages)
 apt_get install python-prettytable
+
+CURWD=`pwd`
+CURWD=`dirname $CURWD`
+
+pippackages=`ls $CURWD/cache/pip`
+
+for package in ${pippackages}; do
+  cd $CURWD/cache/pip/$package && sudo python setup.py install && cd -
+  echo "$CURWD/cache/pip/$package"
+done
+
 # install python requirements
 pip_install `cat $FILES/pips/* | uniq`
 
