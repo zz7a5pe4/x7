@@ -1,5 +1,6 @@
 #!/bin/bash
 
+MYID=`whoami`
 
 chk_root () {
 
@@ -12,7 +13,6 @@ chk_root () {
 
 }
 
-MYID=`whoami`
 
 if [ -f ./INITDONE ]
   then
@@ -45,14 +45,15 @@ cp -f ./functions_template ./functions
 sed -e "s|%PIPLOCALCACHE%|$CURWD/cache/pip|g" -i ./functions
 chown $MYID ./functions
 
-grep "^deb file://$CURWD/cache/apt/ /$" /etc/apt/sources.list > /dev/null
-if [ "$?" -ne "0" ];
-  then
-    echo "deb file://$CURWD/cache/apt/ /" >> /etc/apt/sources.list
-  else
-    echo "already in source.list"
+if [ -f $CURWD/cache/apt/Packages.gz ]; then
+  grep "^deb file://$CURWD/cache/apt/ /$" /etc/apt/sources.list > /dev/null
+  if [ "$?" -ne "0" ];
+    then
+      echo "deb file://$CURWD/cache/apt/ /" >> /etc/apt/sources.list
+    else
+      echo "already in source.list"
+  fi
 fi
-
 apt-get update 
 #apt-get update > /dev/null
 

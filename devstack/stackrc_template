@@ -1,3 +1,7 @@
+# stack repo
+STACK_REPO=%BASESRC%/cache/stack
+STACK_BRANCH=master
+
 # compute service
 NOVA_REPO=%BASESRC%/cache/stack/nova
 NOVA_BRANCH=master

@@ -24,7 +24,9 @@ function cp_it {
 # ownership to the proper user.
 # Set global RECLONE=yes to simulate a clone when dest-dir exists
 # git_clone remote dest-dir branch
+
 function git_clone {
+    echo "$OFFLINE"
     [[ "$OFFLINE" = "True" ]] && return
 
     GIT_REMOTE=$1
@@ -63,6 +65,9 @@ function git_clone {
     fi
 }
 
+function git_clone_empty {
+    echo "ignore"
+}
 
 # pip install wrapper to set cache and proxy environment variables
 # pip_install package [package ...]

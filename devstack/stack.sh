@@ -479,12 +479,6 @@ failed() {
 # an error.  It is also useful for following along as the install occurs.
 set -o xtrace
 
-# create the destination directory and ensure it is writable by the user
-sudo mkdir -p $DEST
-if [ ! -w $DEST ]; then
-    sudo chown `whoami` $DEST
-fi
-
 # Install Packages
 # ================
 #
@@ -556,58 +550,63 @@ apt_get install python-prettytable
 CURWD=`pwd`
 CURWD=`dirname $CURWD`
 
-pippackages=`ls $CURWD/cache/pip`
 
-for package in ${pippackages}; do
-  cd $CURWD/cache/pip/$package && sudo python setup.py install && cd -
-  echo "$CURWD/cache/pip/$package"
-done
+if [ -d $$CURWD/cache/pip ];then
+  pippackages=`ls $CURWD/cache/pip`
+  for package in ${pippackages}; do
+    cd $CURWD/cache/pip/$package && sudo python setup.py install && cd -
+    echo "$CURWD/cache/pip/$package"
+  done
+fi
 
 # install python requirements
 pip_install `cat $FILES/pips/* | uniq`
 
+sudo chown `whoami`  `dirname $DEST`
+git_clone $STACK_REPO $DEST $STACK_BRANCH
+
 # compute service
-git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
+git_clone_empty $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
 # python client library to nova that horizon (and others) use
-git_clone $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
-git_clone $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
+git_clone_empty $KEYSTONECLIENT_REPO $KEYSTONECLIENT_DIR $KEYSTONECLIENT_BRANCH
+git_clone_empty $NOVACLIENT_REPO $NOVACLIENT_DIR $NOVACLIENT_BRANCH
 
 # glance, swift middleware and nova api needs keystone middleware
 if is_service_enabled key g-api n-api swift; then
     # unified auth system (manages accounts/tokens)
-    git_clone $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
+    git_clone_empty $KEYSTONE_REPO $KEYSTONE_DIR $KEYSTONE_BRANCH
 fi
 if is_service_enabled swift; then
     # storage service
-    git_clone $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
+    git_clone_empty $SWIFT_REPO $SWIFT_DIR $SWIFT_BRANCH
 fi
 if is_service_enabled g-api n-api; then
     # image catalog service
-    git_clone $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
+    git_clone_empty $GLANCE_REPO $GLANCE_DIR $GLANCE_BRANCH
 fi
 if is_service_enabled n-novnc; then
     # a websockets/html5 or flash powered VNC console for vm instances
-    git_clone $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
+    git_clone_empty $NOVNC_REPO $NOVNC_DIR $NOVNC_BRANCH
 fi
 if is_service_enabled horizon; then
     # django powered web control panel for openstack
-    git_clone $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
+    git_clone_empty $HORIZON_REPO $HORIZON_DIR $HORIZON_BRANCH $HORIZON_TAG
 fi
 if is_service_enabled q-svc; then
     # quantum
-    git_clone $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
+    git_clone_empty $QUANTUM_REPO $QUANTUM_DIR $QUANTUM_BRANCH
 fi
 if is_service_enabled q-svc horizon; then
-    git_clone $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
+    git_clone_empty $QUANTUM_CLIENT_REPO $QUANTUM_CLIENT_DIR $QUANTUM_CLIENT_BRANCH
 fi
 
 if is_service_enabled m-svc; then
     # melange
-    git_clone $MELANGE_REPO $MELANGE_DIR $MELANGE_BRANCH
+    git_clone_empty $MELANGE_REPO $MELANGE_DIR $MELANGE_BRANCH
 fi
 
 if is_service_enabled melange; then
-    git_clone $MELANGECLIENT_REPO $MELANGECLIENT_DIR $MELANGECLIENT_BRANCH
+    git_clone_empty $MELANGECLIENT_REPO $MELANGECLIENT_DIR $MELANGECLIENT_BRANCH
 fi
 
 # Initialization
