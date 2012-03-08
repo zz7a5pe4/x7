@@ -551,7 +551,7 @@ CURWD=`pwd`
 CURWD=`dirname $CURWD`
 
 
-if [ -d $$CURWD/cache/pip ];then
+if [ -d $CURWD/cache/pip ];then
   pippackages=`ls $CURWD/cache/pip`
   for package in ${pippackages}; do
     cd $CURWD/cache/pip/$package && sudo python setup.py install && cd -

@@ -9,3 +9,6 @@ oneiric-server-cloudimg-amd64
 INITDONE
 ec2rc
 localrc
+cache
+img
+ubuntu-11.10-server-cloudimg-amd64
