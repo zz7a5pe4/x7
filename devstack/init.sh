@@ -13,14 +13,6 @@ chk_root () {
 
 }
 
-
-if [ -f ./INITDONE ]
-  then
-    echo "Please remove ./INITDONE first if you DO need to re-init"
-    echo "FAILED"
-    exit -1
-fi
-
 chk_root 
 
 CURWD=`pwd`
@@ -47,12 +39,18 @@ chown $MYID ./functions
 
 if [ -f $CURWD/cache/apt/Packages.gz ]; then
   grep "^deb file://$CURWD/cache/apt/ /$" /etc/apt/sources.list > /dev/null
-  if [ "$?" -ne "0" ];
-    then
-      echo "deb file://$CURWD/cache/apt/ /" >> /etc/apt/sources.list
-    else
-      echo "already in source.list"
+  #if [ "$?" -ne "0" ];
+  #  then
+  #    echo "deb file://$CURWD/cache/apt/ /" >> /etc/apt/sources.list
+  #  else
+  #    echo "already in source.list"
+  #fi
+  if [ -f /etc/apt/sources.list.backup ]; then
+    echo "sources.list already backup"
+  else
+    sudo mv /etc/apt/sources.list /etc/apt/sources.list.backup
   fi
+  echo "deb file://$CURWD/cache/apt/ /" > /etc/apt/sources.list
 fi
 apt-get update 
 #apt-get update > /dev/null
