@@ -2,6 +2,29 @@
 
 MYID=`whoami`
 
+SERVERADDR=192.168.1.2
+
+
+if [ $# == 0 ]; then
+  echo "missing argument"
+  exit -1
+fi 
+
+source ./addrc
+
+
+if [ $1 == "srv" ]; then
+  cp localrc_server localrc
+  sed -i "s|%HOSTADDR%|$HOSTADDR|g" localrc
+elif [ $1 == "cln" ]; then
+  cp localrc_compute localrc
+  sed -i "s|%HOSTADDR%|$HOSTADDR|g" localrc
+  sed -i "s|%SERVERADDR%|$SERVERADDR|g" localrc
+else
+  echo "wrong"
+  exit -1
+fi
+
 chk_root () {
 
   if [ ! $( id -u ) -eq 0 ]; then
