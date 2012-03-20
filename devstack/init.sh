@@ -1,6 +1,5 @@
 #!/bin/bash
 
-MYID=`whoami`
 
 SERVERADDR=192.168.1.2
 
@@ -29,12 +28,16 @@ chk_root () {
 
   if [ ! $( id -u ) -eq 0 ]; then
     echo "Please enter root's password."
-    exec sudo su -c "${0} ${CMDLN_ARGS}" # Call this prog as root
+    exec sudo -E su -m -c "${0} ${CMDLN_ARGS}" # Call this prog as root
     exit ${?}  # sice we're 'execing' above, we wont reach this exit
                # unless something goes wrong.
   fi
 
 }
+
+if [ -z "$MYID" ]; then
+    export MYID=`whoami`
+fi 
 
 chk_root 
 
