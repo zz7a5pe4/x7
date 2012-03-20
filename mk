@@ -16,7 +16,7 @@ function aptcache () {
 function imgcache () {
   mkdir -p $CURWD/img/
   wget http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-uec.tar.gz -O $CURWD/img/cirros-0.3.0-x86_64-uec.tar.gz
-  wget http://cloud-images.ubuntu.com/releases/oneiric/release/ubuntu-11.10-server-cloudimg-amd64.tar.gz -O $CURWD/img/ubuntu-11.10-server-cloudimg-amd64.tar.gz
+  #wget http://cloud-images.ubuntu.com/releases/oneiric/release/ubuntu-11.10-server-cloudimg-amd64.tar.gz -O $CURWD/img/ubuntu-11.10-server-cloudimg-amd64.tar.gz
 }
 
 function openstackcache () {
