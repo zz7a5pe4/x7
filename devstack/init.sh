@@ -9,7 +9,7 @@ if [ $# == 0 ]; then
   exit -1
 fi 
 
-INTERFACE=eth3
+INTERFACE=eth0
 
 source ./addrc
 
@@ -20,6 +20,7 @@ if [ $1 == "srv" ]; then
   sed -i "s|%HOSTADDR%|$HOSTADDR|g" localrc
   sed -i "s|%INTERFACE%|$INTERFACE|g" localrc
 elif [ $1 == "cln" ]; then
+  echo ${SERVERADDR:?"SERVERADDR must be set firstly"}
   cp localrc_compute localrc
   sed -i "s|%HOSTADDR%|$HOSTADDR|g" localrc
   sed -i "s|%INTERFACE%|$INTERFACE|g" localrc
