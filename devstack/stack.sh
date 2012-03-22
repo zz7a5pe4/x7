@@ -906,7 +906,7 @@ if is_service_enabled n-cpu; then
     # libvirt detects various settings on startup, as we potentially changed
     # the system configuration (modules, filesystems), we need to restart
     # libvirt to detect those changes.
-    sudo /etc/init.d/libvirt-bin restart
+    #sudo /etc/init.d/libvirt-bin restart
 
 
     # Instance Storage
@@ -1650,6 +1650,20 @@ fi
 
 # Echo HOST_IP - useful for build_uec.sh, which uses dhcp to give the instance an address
 echo "This is your host ip: $HOST_IP"
+
+echo "mount shared instance dir"
+sudo mount -t nfs $SERVICE_HOST:/srv/instances $NOVA_DIR/instances
+
+echo "change libvirt config for migrate"
+sudo sed -i  /etc/libvirt/libvirtd.conf -e "
+        s,#listen_tls = 0,listen_tls = 0,g;
+        s,#listen_tcp = 1,listen_tcp = 1,g;
+        s,#auth_tcp = \"sasl\",auth_tcp = \"none\",g;
+"
+
+sudo sed -i /etc/default/libvirt-bin -e "s,libvirtd_opts=\"-d\",libvirtd_opts=\" -d -l\",g"
+sudo /etc/init.d/libvirt-bin restart
+
 
 # Indicate how long this took to run (bash maintained variable 'SECONDS')
 echo "stack.sh completed in $SECONDS seconds."
