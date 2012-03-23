@@ -741,6 +741,7 @@ fi
 
 # Echo HOST_IP - useful for build_uec.sh, which uses dhcp to give the instance an address
 echo "This is your host ip: $HOST_IP"
-
+echo "mount shared instance dir"
+sudo mount -t nfs $MYSQL_HOST:/srv/instances $NOVA_DIR/instances
 # Indicate how long this took to run (bash maintained variable 'SECONDS')
 echo "stack.sh completed in $SECONDS seconds."
