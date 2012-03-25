@@ -9,7 +9,7 @@ if [ $# == 0 ]; then
   exit -1
 fi 
 
-INTERFACE=eth3
+#INTERFACE=eth3
 
 source ./addrc
 
