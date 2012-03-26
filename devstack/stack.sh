@@ -32,6 +32,12 @@ if [[ ! ${DISTRO} =~ (oneiric) ]]; then
     fi
 fi
 
+update () {
+  ../notify_status.py "$1" "$2"
+  echo $1 $2
+}
+
+
 # Keep track of the current devstack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
@@ -1664,6 +1670,7 @@ sudo sed -i  /etc/libvirt/libvirtd.conf -e "
 sudo sed -i /etc/default/libvirt-bin -e "s,libvirtd_opts=\"-d\",libvirtd_opts=\" -d -l\",g"
 sudo /etc/init.d/libvirt-bin restart
 
-
+update prog 100
+update cmd complete
 # Indicate how long this took to run (bash maintained variable 'SECONDS')
 echo "stack.sh completed in $SECONDS seconds."

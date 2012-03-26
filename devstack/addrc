@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/bin/bash -e
 
 echo ${INTERFACE:?"need set INTERFACE first"}
 
 HOSTADDR=$(ifconfig | grep -A1 "$INTERFACE" | grep 'inet addr:' |cut -d: -f2 | awk '{ print $1}')
-BRDADDR=$(ifconfig | grep -A1 "$INTERFACE0" | grep 'inet addr:' |cut -d: -f3 | awk '{ print $1}')
-MASKADDR=$(ifconfig | grep -A1 "$INTERFACE0" | grep 'inet addr:' |cut -d: -f4 | awk '{ print $1}')
+BRDADDR=$(ifconfig | grep -A1 "$INTERFACE" | grep 'inet addr:' |cut -d: -f3 | awk '{ print $1}')
+MASKADDR=$(ifconfig | grep -A1 "$INTERFACE" | grep 'inet addr:' |cut -d: -f4 | awk '{ print $1}')
 GATEWAY=$(route -n | grep 'UG[ \t]' | awk '{print $2}')
 HOSTNAME=$(hostname -s)
 

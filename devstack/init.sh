@@ -1,4 +1,9 @@
-#!/bin/bash
+#!/bin/bash -e
+
+update () {
+  ../notify_status.py "$1" "$2"
+  echo $1 $2
+}
 
 
 SERVERADDR=192.168.1.2
@@ -45,21 +50,11 @@ else
   exit -1
 fi
 
-chk_root $1
+#chk_root $1
 
 CURWD=`pwd`
 CURWD=`dirname $CURWD`
 
-
-grep "^$MYID ALL=(ALL) NOPASSWD: ALL$" /etc/sudoers > /dev/null
-if [ "$?" -ne "0" ];
-  then
-    chmod +w /etc/sudoers
-    echo "$MYID ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-    chmod -w /etc/sudoers
-  else
-    echo "already in sudoer"
-fi
 
 cp -f ./stackrc_template ./stackrc
 sed -e "s|%BASESRC%|$CURWD|g" -i ./stackrc
@@ -69,10 +64,6 @@ cp -f ./functions_template ./functions
 sed -e "s|%PIPLOCALCACHE%|$CURWD/cache/pip|g" -i ./functions
 chown $MYID ./functions
 
-apt-get update 
-#apt-get update > /dev/null
-
-echo "Done"
-touch ./INITDONE
+update prog 85
 exit 0
 
