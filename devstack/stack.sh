@@ -172,6 +172,7 @@ QUANTUM_DIR=$DEST/quantum
 QUANTUM_CLIENT_DIR=$DEST/python-quantumclient
 MELANGE_DIR=$DEST/melange
 MELANGECLIENT_DIR=$DEST/python-melangeclient
+X7TOOLS=$DEST/x7_dashboard
 
 # Default Quantum Plugin
 Q_PLUGIN=${Q_PLUGIN:-openvswitch}
@@ -636,6 +637,7 @@ cd $NOVA_DIR; sudo python setup.py develop
 if is_service_enabled horizon; then
     cd $HORIZON_DIR/horizon; sudo python setup.py develop
     cd $HORIZON_DIR/openstack-dashboard; sudo python setup.py develop
+    cd $X7TOOLS; sudo python setup.py develop
 fi
 if is_service_enabled q-svc; then
     cd $QUANTUM_DIR; sudo python setup.py develop
