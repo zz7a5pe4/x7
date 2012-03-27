@@ -32,12 +32,6 @@ if [[ ! ${DISTRO} =~ (oneiric) ]]; then
     fi
 fi
 
-update () {
-  ../notify_status.py "$1" "$2"
-  echo $1 $2
-}
-
-
 # Keep track of the current devstack directory.
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
@@ -556,6 +550,12 @@ apt_get install python-prettytable
 
 CURWD=`pwd`
 CURWD=`dirname $CURWD`
+
+
+update () {
+  $CURWD/notify_status.py "$1" "$2"
+  echo $1 $2
+}
 
 
 if [ -d $CURWD/cache/pip ];then
