@@ -44,7 +44,7 @@ if [ $# == 0 ]; then
 fi
 
 update () {
-  ./notify_status.py "$1" "$2"
+  $CURWD/notify_status.py "$1" "$2"
   echo $1 $2
 }
 
