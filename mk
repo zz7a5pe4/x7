@@ -36,6 +36,7 @@ function pipcache () {
   wget https://github.com/downloads/jkerng/x7/django-nose-selenium-0.7.3.tar.gz -O $CURWD/cache/pip/django-nose-selenium-0.7.3.tar.gz
   tar xzf $CURWD/cache/pip/django-nose-selenium-0.7.3.tar.gz -C $CURWD/cache/pip/
   rm -f $CURWD/cache/pip/django-nose-selenium-0.7.3.tar.gz
+  chmod -R +r $CURWD/cache/pip
 }
 
 if [ $# == 0 ]; then
