@@ -1660,7 +1660,7 @@ fi
 echo "This is your host ip: $HOST_IP"
 
 echo "mount shared instance dir"
-sudo mount -t nfs $MYSQL_HOST:/srv/instances $NOVA_DIR/instances
+sudo mount -t nfs $MYSQL_HOST:/srv/instances $NOVA_DIR/instances && true
 
 echo "change libvirt config for migrate"
 sudo sed -i  /etc/libvirt/libvirtd.conf -e "
