@@ -65,5 +65,4 @@ sed -e "s|%PIPLOCALCACHE%|$CURWD/cache/pip|g" -i ./functions
 chown $MYID ./functions
 
 update prog 85
-exit 0
 
