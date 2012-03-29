@@ -1676,3 +1676,4 @@ update prog 100
 update cmd complete
 # Indicate how long this took to run (bash maintained variable 'SECONDS')
 echo "stack.sh completed in $SECONDS seconds."
+exit 0
