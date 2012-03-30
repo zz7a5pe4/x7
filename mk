@@ -24,7 +24,7 @@ function imgcache () {
   mkdir -p $CURWD/img/
   if [ $PKG_SRC == "usb" ]; then
 # spring ----------------------------->>>
-    cp /media/x7_usb/cirros-0.3.0-x86_64-uec.tar.gz $CURWD/img/cirros-0.3.0-x86_64-uec.tar.gz
+    cp /media/x7_usb/x7_cache/cirros-0.3.0-x86_64-uec.tar.gz $CURWD/img/cirros-0.3.0-x86_64-uec.tar.gz
 # ------------------------------------<<<
   else
     wget http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-uec.tar.gz -O $CURWD/img/cirros-0.3.0-x86_64-uec.tar.gz
@@ -41,9 +41,9 @@ function pipcache () {
   mkdir -p $CURWD/cache/pip
   if [ $PKG_SRC == "usb" ]; then
 # spring ------------------------------->>>
-    tar xzf /media/x7_usb/pika-0.9.5.tar.gz -C $CURWD/cache/pip/
-    tar xzf /media/x7_usb/passlib-1.5.3.tar.gz -C $CURWD/cache/pip/
-    tar xzf /mdedia/x7_usb/django-nose-selenium-0.7.3.tar.gz -C $CURWD/cache/pip/
+    tar xzf /media/x7_usb/x7_cache/pika-0.9.5.tar.gz -C $CURWD/cache/pip/
+    tar xzf /media/x7_usb/x7_cache/passlib-1.5.3.tar.gz -C $CURWD/cache/pip/
+    tar xzf /media/x7_usb/x7_cache/django-nose-selenium-0.7.3.tar.gz -C $CURWD/cache/pip/
 # --------------------------------------<<<
   else
     wget https://github.com/downloads/jkerng/x7/pika-0.9.5.tar.gz -O $CURWD/cache/pip/pika-0.9.5.tar.gz
