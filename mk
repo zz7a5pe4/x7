@@ -5,7 +5,7 @@ echo $CURWD
 # spring ------------------------->>>
 PKG_SRC=usb
 if [ $PKG_SRC == "usb" ]; then
-  mkdir /media/x7_usb
+  mkdir -p /media/x7_usb
   sudo mount /dev/sdb4 /media/x7_usb
 fi
 # --------------------------------<<<
