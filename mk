@@ -61,8 +61,8 @@ if [ $1 == "cache" ]; then
 fi
 
 if [ $1 == "client" ]; then
-  openstackcache
-  pipcache
+  openstackcache || true
+  pipcache  || true
 fi
 
 if [ $1 == "tar" ]; then

@@ -1,12 +1,17 @@
 #!/bin/bash -e
+UPDATESRV=0
 
 update () {
-  ../notify_status.py "$1" "$2"
-  echo $1 $2
+  if [ $UPDATESRV == 0 ]; then
+    echo $1 $2
+  else
+    ../notify_status.py "$1" "$2"
+    echo $1 $2
+  fi
 }
 
 
-SERVERADDR=192.168.1.2
+SERVERADDR=192.168.1.4
 
 
 if [ $# == 0 ]; then
@@ -35,6 +40,7 @@ chk_root () {
 }
 
 if [ $1 == "srv" ]; then
+  UPDATESRV=1
   cp localrc_server localrc
   sed -i "s|%HOSTADDR%|$HOSTADDR|g" localrc
   sed -i "s|%INTERFACE%|$INTERFACE|g" localrc
