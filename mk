@@ -4,7 +4,7 @@ CURWD=`pwd`
 echo $CURWD
 # spring ------------------------->>>
 PKG_SRC=usb
-if [ PKG_SRC == "usb" ]; then
+if [ $PKG_SRC == "usb" ]; then
   mkdir /media/x7_usb
   sudo mount /dev/sdb4 /media/x7_usb
 fi
@@ -22,7 +22,7 @@ function aptcache () {
 }
 function imgcache () {
   mkdir -p $CURWD/img/
-  if [ PKG_SRC == "usb" ]; then
+  if [ $PKG_SRC == "usb" ]; then
 # spring ----------------------------->>>
     cp /media/x7_usb/cirros-0.3.0-x86_64-uec.tar.gz $CURWD/img/cirros-0.3.0-x86_64-uec.tar.gz
 # ------------------------------------<<<
@@ -39,7 +39,7 @@ function openstackcache () {
 
 function pipcache () {
   mkdir -p $CURWD/cache/pip
-  if [ PKG_SRC == "usb" ]; then
+  if [ $PKG_SRC == "usb" ]; then
 # spring ------------------------------->>>
     tar xzf /media/x7_usb/pika-0.9.5.tar.gz -C $CURWD/cache/pip/
     tar xzf /media/x7_usb/passlib-1.5.3.tar.gz -C $CURWD/cache/pip/
