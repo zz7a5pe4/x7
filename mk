@@ -35,6 +35,7 @@ function imgcache () {
 
 function openstackcache () {
   git clone git://github.com/zz7a5pe4/x7_dep.git $CURWD/cache/stack
+  sudo cp -rf $CURWD/cache/stack /srv/fai/nfsroot/live/filesystem.dir/root
 }
 
 function pipcache () {
@@ -57,6 +58,7 @@ function pipcache () {
     rm -f $CURWD/cache/pip/django-nose-selenium-0.7.3.tar.gz
   fi
   chmod -R +r $CURWD/cache/pip || true
+  sudo cp -rf $CURWD/cache/pip /srv/fai/nfsroot/live/filesystem.dir/root
 }
 
 if [ $# == 0 ]; then
@@ -87,8 +89,8 @@ fi
 
 if [ $1 == "client" ]; then
   PKG_SRC=INET
-  openstackcache || true
-  pipcache  || true
+  #openstackcache || true
+  #pipcache  || true
 fi
 
 if [ $1 == "tar" ]; then
