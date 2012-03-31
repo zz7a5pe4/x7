@@ -11,7 +11,7 @@ update () {
 }
 
 
-SERVERADDR=192.168.1.4
+#SERVERADDR=%SRVADDR%
 
 
 if [ $# == 0 ]; then
