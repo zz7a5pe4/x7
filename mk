@@ -73,7 +73,7 @@ update () {
 
 if [ $1 == "cache" ]; then
   if [ $PKG_SRC == "usb" ]; then
-    mkdir -p /media/x7_usb
+    sudo mkdir -p /media/x7_usb
     sudo mount /dev/sdb4 /media/x7_usb
   fi
 
