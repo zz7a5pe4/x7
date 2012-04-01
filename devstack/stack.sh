@@ -597,7 +597,7 @@ pip_install $(get_packages $FILES/pips | sort -u)
 
 #rm -rf $DEST
 sudo chown `whoami`  `dirname $DEST`
-rm -rf $DEST
+sudo rm -rf $DEST
 git_clone_real $STACK_REPO $DEST $STACK_BRANCH
 
 # compute service

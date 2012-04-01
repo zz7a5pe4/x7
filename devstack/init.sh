@@ -11,7 +11,7 @@ update () {
 }
 
 
-SERVERADDR=192.68.1.2
+#SERVERADDR=192.168.1.2
 
 
 if [ $# == 0 ]; then

@@ -37,7 +37,7 @@ function openstackcache () {
   cd $CURWD/cache/stack
   git fetch git://github.com/zz7a5pe4/x7_dep.git demo_mig
   git checkout demo_mig
-  #sudo cp -rf $CURWD/cache/stack /srv/fai/nfsroot/live/filesystem.dir/root
+  sudo cp -rf $CURWD/cache/stack /srv/fai/nfsroot/live/filesystem.dir/root
 }
 
 function pipcache () {
@@ -70,7 +70,7 @@ function pipcache () {
     rm -f $CURWD/cache/pip/django-nose-selenium-0.7.3.tar.gz
   fi
   chmod -R +r $CURWD/cache/pip || true
-  #sudo cp -rf $CURWD/cache/pip /srv/fai/nfsroot/live/filesystem.dir/root
+  sudo cp -rf $CURWD/cache/pip /srv/fai/nfsroot/live/filesystem.dir/root
 }
 
 if [ $# == 0 ]; then
@@ -89,9 +89,9 @@ if [ $1 == "cache" ]; then
     sudo mount /dev/sdb4 /media/x7_usb
   fi
 
-  #aptcache
+  aptcache
   update prog 50
-  #imgcache
+  imgcache
   update prog 60
   openstackcache && true
   update prog 70
