@@ -22,7 +22,7 @@ function imgcache () {
   if [ $PKG_SRC == "usb" ]; then
 # spring ----------------------------->>>
     cp /media/x7_usb/x7_cache/cirros-0.3.0-x86_64-uec.tar.gz $CURWD/img/cirros-0.3.0-x86_64-uec.tar.gz
-  elif [$PKG_SRC == "vonbros_site"]; then
+  elif [ $PKG_SRC == "vonbros_site" ]; then
     wget http://www.vonbros.com/x7_cache/cirros-0.3.0-x86_64-uec.tar.gz -O $CURWD/img/cirros-0.3.0-x86_64-uec.tar.gz
 # ------------------------------------<<<
   else
