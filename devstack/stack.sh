@@ -513,6 +513,7 @@ failed() {
 set -o xtrace
 
 # create the destination directory and ensure it is writable by the user
+sudo rm -rf $DEST
 sudo mkdir -p $DEST
 if [ ! -w $DEST ]; then
     sudo chown `whoami` $DEST
@@ -597,7 +598,6 @@ pip_install $(get_packages $FILES/pips | sort -u)
 
 #rm -rf $DEST
 sudo chown `whoami`  `dirname $DEST`
-rm -rf $DEST
 git_clone_real $STACK_REPO $DEST $STACK_BRANCH
 
 # compute service
