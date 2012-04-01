@@ -1,6 +1,8 @@
+#RC_DIR=$(cd $(dirname "$BASH_SOURCE") && pwd)
+
 # stack repo
 STACK_REPO=%BASESRC%/cache/stack
-STACK_BRANCH=master
+STACK_BRANCH=demo_mig
 
 # compute service
 NOVA_REPO=%BASESRC%/cache/stack/nova
@@ -77,7 +79,7 @@ case "$LIBVIRT_TYPE" in
     lxc) # the cirros root disk in the uec tarball is empty, so it will not work for lxc
         IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-rootfs.img.gz";;
     *)  # otherwise, use the uec style image (with kernel, ramdisk, disk)
-        IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-uec.tar.gz,http://cloud-images.ubuntu.com/releases/oneiric/release/ubuntu-11.10-server-cloudimg-amd64.tar.gz";;
+        IMAGE_URLS="http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-uec.tar.gz";
 esac
 
 # use stored ec2 env variables

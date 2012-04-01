@@ -10,7 +10,10 @@ fi
 # This directory
 TOP_DIR=$(cd $(dirname "$0") && pwd)
 
-# Source params - override xenrc params in your localrc to suite your taste
+# Source lower level functions
+. $TOP_DIR/../../functions
+
+# Source params - override xenrc params in your localrc to suit your taste
 source xenrc
 
 # Echo commands
@@ -134,17 +137,8 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 SR_UUID=`xe sr-list --minimal name-label="Local storage"`
 xe sr-param-set uuid=$SR_UUID other-config:i18n-key=local-storage
 
-# Clean nova if desired
-if [ "$CLEAN" = "1" ]; then
-    rm -rf $TOP_DIR/nova
-fi
-
 # Checkout nova
-if [ ! -d $TOP_DIR/nova ]; then
-    env GIT_SSL_NO_VERIFY=true git clone $NOVA_REPO
-    cd $TOP_DIR/nova
-    git checkout $NOVA_BRANCH
-fi 
+git_clone $NOVA_REPO $TOP_DIR/nova $NOVA_BRANCH
 
 # Install plugins
 cp -pr $TOP_DIR/nova/plugins/xenserver/xenapi/etc/xapi.d /etc/
@@ -182,7 +176,11 @@ fi
 if [ -z $PUB_BR ]; then
     PUB_BR=$(xe network-list --minimal uuid=$PUB_NET params=bridge)
 fi
-$TOP_DIR/scripts/install-os-vpx.sh -f $XVA -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -w
+$TOP_DIR/scripts/install-os-vpx.sh -f $XVA -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -w -k "flat_network_bridge=${VM_BR}"
+
+if [ $PUB_IP == "dhcp" ]; then
+    PUB_IP=$(xe vm-list --minimal name-label=$GUEST_NAME params=networks |  sed -ne 's,^.*3/ip: \([0-9.]*\).*$,\1,p')
+fi
 
 # If we have copied our ssh credentials, use ssh to monitor while the installation runs
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}

@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 
-source ./stackrc
+# **exercise.sh**
+
+# Keep track of the current devstack directory.
+TOP_DIR=$(cd $(dirname "$0") && pwd)
+
+# Load local configuration
+source $TOP_DIR/stackrc
+
 # Run everything in the exercises/ directory that isn't explicitly disabled
 
 # comma separated list of script basenames to skip
@@ -21,11 +28,14 @@ for script in $basenames; do
     if [[ "$SKIP_EXERCISES" =~ $script ]] ; then
         skips="$skips $script"
     else
-        echo =========================
+        echo "====================================================================="
         echo Running $script
-        echo =========================
+        echo "====================================================================="
         $EXERCISE_DIR/$script.sh
-        if [[ $? -ne 0 ]] ; then
+        exitcode=$?
+        if [[ $exitcode == 55 ]]; then
+            skips="$skips $script"
+        elif [[ $exitcode -ne 0 ]] ; then
             failures="$failures $script"
         else
             passes="$passes $script"
@@ -34,8 +44,7 @@ for script in $basenames; do
 done
 
 # output status of exercise run
-echo =========================
-echo =========================
+echo "====================================================================="
 for script in $skips; do
     echo SKIP $script
 done
@@ -45,6 +54,7 @@ done
 for script in $failures; do
     echo FAILED $script
 done
+echo "====================================================================="
 
 if [ -n "$failures" ] ; then
     exit 1

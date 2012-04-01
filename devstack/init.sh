@@ -5,13 +5,13 @@ update () {
   if [ $UPDATESRV == 0 ]; then
     echo $1 $2
   else
-    ../notify_status.py "$1" "$2"
+    #../notify_status.py "$1" "$2"
     echo $1 $2
   fi
 }
 
 
-#SERVERADDR=%SRVADDR%
+SERVERADDR=192.68.1.2
 
 
 if [ $# == 0 ]; then
@@ -19,7 +19,7 @@ if [ $# == 0 ]; then
   exit -1
 fi 
 
-#INTERFACE=eth3
+INTERFACE=eth0
 
 source ./addrc
 
@@ -44,6 +44,7 @@ if [ $1 == "srv" ]; then
   cp localrc_server localrc
   sed -i "s|%HOSTADDR%|$HOSTADDR|g" localrc
   sed -i "s|%INTERFACE%|$INTERFACE|g" localrc
+  sed -i "s|%BRDADDR%|$BRDADDR|g" localrc
 
 elif [ $1 == "cln" ]; then
   echo ${SERVERADDR:?"SERVERADDR must be set firstly"}
@@ -51,6 +52,7 @@ elif [ $1 == "cln" ]; then
   sed -i "s|%HOSTADDR%|$HOSTADDR|g" localrc
   sed -i "s|%INTERFACE%|$INTERFACE|g" localrc
   sed -i "s|%SERVERADDR%|$SERVERADDR|g" localrc
+  sed -i "s|%BRDADDR%|$BRDADDR|g" localrc
 else
   echo "wrong"
   exit -1

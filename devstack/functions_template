@@ -1,12 +1,19 @@
 # functions - Common functions used by DevStack components
 
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
 
 # apt-get wrapper to set arguments correctly
 # apt_get package [package ...]
 function apt_get() {
-        sudo DEBIAN_FRONTEND=noninteractive \
+    [[ "$OFFLINE" = "True" || -z "$@" ]] && return
+    local sudo="sudo"
+    [[ "$(id -u)" = "0" ]] && sudo="env"
+    $sudo DEBIAN_FRONTEND=noninteractive \
         http_proxy=$http_proxy https_proxy=$https_proxy \
-        apt-get -y --option "Dpkg::Options::=--force-confold" --force-yes "$@"
+        apt-get -y --option "Dpkg::Options::=--force-confold" --assume-yes "$@"
 }
 
 
@@ -19,60 +26,113 @@ function cp_it {
 }
 
 
+# Prints "message" and exits
+# die "message"
+function die() {
+    local exitcode=$?
+    set +o xtrace
+    echo $@
+    exit $exitcode
+}
+
+
+# Checks an environment variable is not set or has length 0 OR if the
+# exit code is non-zero and prints "message" and exits
+# NOTE: env-var is the variable name without a '$'
+# die_if_not_set env-var "message"
+function die_if_not_set() {
+    (
+        local exitcode=$?
+        set +o xtrace
+        local evar=$1; shift
+        if ! is_set $evar || [ $exitcode != 0 ]; then
+            set +o xtrace
+            echo $@
+            exit -1
+        fi
+    )
+}
+
+
+# Grab a numbered field from python prettytable output
+# Fields are numbered starting with 1
+# Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
+# get_field field-number
+function get_field() {
+    while read data; do
+        if [ "$1" -lt 0 ]; then
+            field="(\$(NF$1))"
+        else
+            field="\$$(($1 + 1))"
+        fi
+        echo "$data" | awk -F'[ \t]*\\|[ \t]*' "{print $field}"
+    done
+}
+
+
 # git clone only if directory doesn't exist already.  Since ``DEST`` might not
 # be owned by the installation user, we create the directory and change the
 # ownership to the proper user.
 # Set global RECLONE=yes to simulate a clone when dest-dir exists
 # git_clone remote dest-dir branch
-
-function git_clone {
-    echo "$OFFLINE"
+function git_clone_real {
     [[ "$OFFLINE" = "True" ]] && return
 
     GIT_REMOTE=$1
     GIT_DEST=$2
     GIT_BRANCH=$3
 
-    if echo $GIT_BRANCH | egrep -q "^refs"; then
-        # If our branch name is a gerrit style refs/changes/...
-        if [[ ! -d $GIT_DEST ]]; then
-            git clone $GIT_REMOTE $GIT_DEST
-        fi
-        cd $GIT_DEST
-        git fetch $GIT_REMOTE $GIT_BRANCH && git checkout FETCH_HEAD
-    else
-        # do a full clone only if the directory doesn't exist
-        if [[ ! -d $GIT_DEST ]]; then
-            git clone $GIT_REMOTE $GIT_DEST
-            cd $GIT_DEST
-            # This checkout syntax works for both branches and tags
-            git checkout $GIT_BRANCH
-        elif [[ "$RECLONE" == "yes" ]]; then
-            # if it does exist then simulate what clone does if asked to RECLONE
-            cd $GIT_DEST
-            # set the url to pull from and fetch
-            git remote set-url origin $GIT_REMOTE
-            git fetch origin
-            # remove the existing ignored files (like pyc) as they cause breakage
-            # (due to the py files having older timestamps than our pyc, so python
-            # thinks the pyc files are correct using them)
-            find $GIT_DEST -name '*.pyc' -delete
-            git checkout -f origin/$GIT_BRANCH
-            # a local branch might not exist
-            git branch -D $GIT_BRANCH || true
-            git checkout -b $GIT_BRANCH
-        fi
-    fi
+    git clone $GIT_REMOTE $GIT_DEST
+    cd $GIT_DEST
+    # This checkout syntax works for both branches and tags
+    git checkout $GIT_BRANCH
 }
 
-function git_clone_empty {
-    echo "ignore"
+function git_clone {
+  echo ""
 }
+
+# is_service_enabled() checks if the service(s) specified as arguments are
+# enabled by the user in **ENABLED_SERVICES**.
+#
+# If there are multiple services specified as arguments the test performs a
+# boolean OR or if any of the services specified on the command line
+# return true.
+#
+# There is a special cases for some 'catch-all' services::
+#   **nova** returns true if any service enabled start with **n-**
+#   **glance** returns true if any service enabled start with **g-**
+#   **quantum** returns true if any service enabled start with **q-**
+function is_service_enabled() {
+    services=$@
+    for service in ${services}; do
+        [[ ,${ENABLED_SERVICES}, =~ ,${service}, ]] && return 0
+        [[ ${service} == "nova" && ${ENABLED_SERVICES} =~ "n-" ]] && return 0
+        [[ ${service} == "glance" && ${ENABLED_SERVICES} =~ "g-" ]] && return 0
+        [[ ${service} == "quantum" && ${ENABLED_SERVICES} =~ "q-" ]] && return 0
+    done
+    return 1
+}
+
+
+# Test if the named environment variable is set and not zero length
+# is_set env-var
+function is_set() {
+    local var=\$"$1"
+    if eval "[ -z $var ]"; then
+        return 1
+    fi
+    return 0
+}
+
 
 # pip install wrapper to set cache and proxy environment variables
 # pip_install package [package ...]
 function pip_install {
     [[ "$OFFLINE" = "True" ]] && return
+    if [ $# == 0 ]; then
+	return 0
+    fi
     sudo PIP_DOWNLOAD_CACHE=%PIPLOCALCACHE% \
         HTTP_PROXY=$http_proxy \
         HTTPS_PROXY=$https_proxy \
@@ -91,3 +151,6 @@ function trueorfalse() {
     [[ "1 yes true True TRUE" =~ "$testval" ]] && { echo "True"; return; }
     echo "$default"
 }
+
+# Restore xtrace
+$XTRACE

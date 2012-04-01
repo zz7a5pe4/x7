@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
-# **exercise.sh** - using the cloud can be fun
+# **floating_ips.sh** - using the cloud can be fun
 
 # we will use the ``nova`` cli tool provided by the ``python-novaclient``
-# package
-#
+# package to work out the instance connectivity
 
+echo "*********************************************************************"
+echo "Begin DevStack Exercise: $0"
+echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
@@ -19,19 +21,18 @@ set -o xtrace
 # Settings
 # ========
 
-# Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd)
-source ./openrc
-popd
+# Keep track of the current directory
+EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 
-# Max time to wait while vm goes from build to active state
-ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
+# Import common functions
+source $TOP_DIR/functions
 
-# Max time till the vm is bootable
-BOOT_TIMEOUT=${BOOT_TIMEOUT:-30}
+# Import configuration
+source $TOP_DIR/openrc
 
-# Max time to wait for proper association and dis-association.
-ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-15}
+# Import exercise configuration
+source $TOP_DIR/exerciserc
 
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
@@ -47,6 +48,7 @@ DEFAULT_FLOATING_POOL=${DEFAULT_FLOATING_POOL:-nova}
 
 # Additional floating IP pool and range
 TEST_FLOATING_POOL=${TEST_FLOATING_POOL:-test}
+
 
 # Launching a server
 # ==================
@@ -87,15 +89,16 @@ fi
 # List of instance types:
 nova flavor-list
 
-INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | cut -d"|" -f2`
+INSTANCE_TYPE=`nova flavor-list | grep $DEFAULT_INSTANCE_TYPE | get_field 1`
 if [[ -z "$INSTANCE_TYPE" ]]; then
     # grab the first flavor in the list to launch if default doesn't exist
-   INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | cut -d"|" -f2`
+   INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | get_field 1`
 fi
 
-NAME="myserver"
+NAME="ex-float"
 
-VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | cut -d"|" -f3 | sed 's/ //g'`
+VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | get_field 2`
+die_if_not_set VM_UUID "Failure launching $NAME"
 
 # Testing
 # =======
@@ -114,7 +117,8 @@ if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova show $VM_UUID | grep status | g
 fi
 
 # get the IP of the server
-IP=`nova show $VM_UUID | grep "private network" | cut -d"|" -f3`
+IP=`nova show $VM_UUID | grep "private network" | get_field 2`
+die_if_not_set IP "Failure retrieving IP address"
 
 # for single node deployments, we can ping private ips
 MULTI_HOST=${MULTI_HOST:-0}
@@ -147,7 +151,8 @@ fi
 nova secgroup-list-rules $SECGROUP
 
 # allocate a floating ip from default pool
-FLOATING_IP=`nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | cut -d '|' -f2`
+FLOATING_IP=`nova floating-ip-create | grep $DEFAULT_FLOATING_POOL | get_field 1`
+die_if_not_set FLOATING_IP "Failure creating floating IP"
 
 # list floating addresses
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $FLOATING_IP; do sleep 1; done"; then
@@ -156,7 +161,8 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep -q $
 fi
 
 # add floating ip to our server
-nova add-floating-ip $VM_UUID $FLOATING_IP
+nova add-floating-ip $VM_UUID $FLOATING_IP || \
+    die "Failure adding floating IP $FLOATING_IP to $NAME"
 
 # test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
@@ -165,7 +171,8 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sle
 fi
 
 # Allocate an IP from second floating pool
-TEST_FLOATING_IP=`nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | cut -d '|' -f2`
+TEST_FLOATING_IP=`nova floating-ip-create $TEST_FLOATING_POOL | grep $TEST_FLOATING_POOL | get_field 1`
+die_if_not_set TEST_FLOATING_IP "Failure creating floating IP in $TEST_FLOATING_POOL"
 
 # list floating addresses
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep $TEST_FLOATING_POOL | grep -q $TEST_FLOATING_IP; do sleep 1; done"; then
@@ -174,7 +181,7 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! nova floating-ip-list | grep $TES
 fi
 
 # dis-allow icmp traffic (ping)
-nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0
+nova secgroup-delete-rule $SECGROUP icmp -1 -1 0.0.0.0/0 || die "Failure deleting security group rule from $SECGROUP"
 
 # FIXME (anthony): make xs support security groups
 if [ "$VIRT_DRIVER" != "xenserver" ]; then
@@ -187,13 +194,13 @@ if [ "$VIRT_DRIVER" != "xenserver" ]; then
 fi
 
 # de-allocate the floating ip
-nova floating-ip-delete $FLOATING_IP
+nova floating-ip-delete $FLOATING_IP || die "Failure deleting floating IP $FLOATING_IP"
 
 # Delete second floating IP
-nova floating-ip-delete $TEST_FLOATING_IP
+nova floating-ip-delete $TEST_FLOATING_IP || die "Failure deleting floating IP $TEST_FLOATING_IP"
 
 # shutdown the server
-nova delete $VM_UUID
+nova delete $VM_UUID || die "Failure deleting instance $NAME"
 
 # make sure the VM shuts down within a reasonable time
 if ! timeout $TERMINATE_TIMEOUT sh -c "while nova show $VM_UUID | grep status | grep -q ACTIVE; do sleep 1; done"; then
@@ -202,4 +209,9 @@ if ! timeout $TERMINATE_TIMEOUT sh -c "while nova show $VM_UUID | grep status | 
 fi
 
 # Delete a secgroup
-nova secgroup-delete $SECGROUP
+nova secgroup-delete $SECGROUP || die "Failure deleting security group $SECGROUP"
+
+set +o xtrace
+echo "*********************************************************************"
+echo "SUCCESS: End DevStack Exercise: $0"
+echo "*********************************************************************"

@@ -37,7 +37,13 @@ MAILER_EMAIL_BACKEND = EMAIL_BACKEND
 HORIZON_CONFIG = {
     'dashboards': ('nova', 'syspanel', 'settings',),
     'default_dashboard': 'nova',
-    'user_home': 'dashboard.views.user_home',
+    'user_home': 'openstack_dashboard.views.user_home',
+}
+
+# TODO(tres): Remove these once Keystone has an API to identify auth backend.
+OPENSTACK_KEYSTONE_BACKEND = {
+    'name': 'native',
+    'can_edit_user': True
 }
 
 OPENSTACK_HOST = "127.0.0.1"
@@ -98,6 +104,3 @@ SWIFT_PAGINATE_LIMIT = 100
 #            }
 #        }
 #}
-
-# How much ram on each compute host?
-COMPUTE_HOST_RAM_GB = 16

@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
+# **volumes.sh**
+
 # Test nova volumes with the nova command from python-novaclient
+
+echo "*********************************************************************"
+echo "Begin DevStack Exercise: $0"
+echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
@@ -14,25 +20,25 @@ set -o xtrace
 # Settings
 # ========
 
-# Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd)
-source ./openrc
-popd
+# Keep track of the current directory
+EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 
-# Max time to wait while vm goes from build to active state
-ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
+# Import common functions
+source $TOP_DIR/functions
 
-# Max time till the vm is bootable
-BOOT_TIMEOUT=${BOOT_TIMEOUT:-30}
+# Import configuration
+source $TOP_DIR/openrc
 
-# Max time to wait for proper association and dis-association.
-ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-15}
+# Import exercise configuration
+source $TOP_DIR/exerciserc
 
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
 
 # Boot this image, use first AMi image if unset
 DEFAULT_IMAGE_NAME=${DEFAULT_IMAGE_NAME:-ami}
+
 
 # Launching a server
 # ==================
@@ -55,21 +61,6 @@ IMAGE=`glance -f index | egrep $DEFAULT_IMAGE_NAME | head -1 | cut -d" " -f1`
 # determinine instance type
 # -------------------------
 
-# Helper function to grab a numbered field from python novaclient cli result
-# Fields are numbered starting with 1
-# Reverse syntax is supported: -1 is the last field, -2 is second to last, etc.
-function get_field () {
-    while read data
-    do
-        if [ "$1" -lt 0 ]; then
-            field="(\$(NF$1))"
-        else
-            field="\$$(($1 + 1))"
-        fi
-        echo "$data" | awk -F'[ \t]*\\|[ \t]*' "{print $field}"
-    done
-}
-
 # List of instance types:
 nova flavor-list
 
@@ -79,9 +70,11 @@ if [[ -z "$INSTANCE_TYPE" ]]; then
    INSTANCE_TYPE=`nova flavor-list | head -n 4 | tail -n 1 | get_field 1`
 fi
 
-NAME="myserver"
+NAME="ex-vol"
 
 VM_UUID=`nova boot --flavor $INSTANCE_TYPE --image $IMAGE $NAME --security_groups=$SECGROUP | grep ' id ' | get_field 2`
+die_if_not_set VM_UUID "Failure launching $NAME"
+
 
 # Testing
 # =======
@@ -101,6 +94,7 @@ fi
 
 # get the IP of the server
 IP=`nova show $VM_UUID | grep "private network" | get_field 2`
+die_if_not_set IP "Failure retrieving IP address"
 
 # for single node deployments, we can ping private ips
 MULTI_HOST=${MULTI_HOST:-0}
@@ -130,6 +124,10 @@ fi
 
 # Create a new volume
 nova volume-create --display_name $VOL_NAME --display_description "test volume: $VOL_NAME" 1
+if [[ $? != 0 ]]; then
+    echo "Failure creating volume $VOL_NAME"
+    exit 1
+fi
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not created"
     exit 1
@@ -137,34 +135,42 @@ fi
 
 # Get volume ID
 VOL_ID=`nova volume-list | grep $VOL_NAME | head -1 | get_field 1`
+die_if_not_set VOL_ID "Failure retrieving volume ID for $VOL_NAME"
 
 # Attach to server
 DEVICE=/dev/vdb
-nova volume-attach $VM_UUID $VOL_ID $DEVICE
+nova volume-attach $VM_UUID $VOL_ID $DEVICE || \
+    die "Failure attaching volume $VOL_NAME to $NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep in-use; do sleep 1; done"; then
     echo "Volume $VOL_NAME not attached to $NAME"
     exit 1
 fi
 
 VOL_ATTACH=`nova volume-list | grep $VOL_NAME | head -1 | get_field -1`
+die_if_not_set VOL_ATTACH "Failure retrieving $VOL_NAME status"
 if [[ "$VOL_ATTACH" != $VM_UUID ]]; then
     echo "Volume not attached to correct instance"
     exit 1
 fi
 
 # Detach volume
-nova volume-detach $VM_UUID $VOL_ID
+nova volume-detach $VM_UUID $VOL_ID || die "Failure detaching volume $VOL_NAME from $NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME | grep available; do sleep 1; done"; then
     echo "Volume $VOL_NAME not detached from $NAME"
     exit 1
 fi
 
 # Delete volume
-nova volume-delete $VOL_ID
+nova volume-delete $VOL_ID || die "Failure deleting volume $VOL_NAME"
 if ! timeout $ACTIVE_TIMEOUT sh -c "while ! nova volume-list | grep $VOL_NAME; do sleep 1; done"; then
     echo "Volume $VOL_NAME not deleted"
     exit 1
 fi
 
 # shutdown the server
-nova delete $NAME
+nova delete $NAME || die "Failure deleting instance $NAME"
+
+set +o xtrace
+echo "*********************************************************************"
+echo "SUCCESS: End DevStack Exercise: $0"
+echo "*********************************************************************"

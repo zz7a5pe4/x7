@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
+# **bundle.sh**
+
 # we will use the ``euca2ools`` cli tool that wraps the python boto
-# library to test ec2 compatibility
-#
+# library to test ec2 bundle upload compatibility
+
+echo "*********************************************************************"
+echo "Begin DevStack Exercise: $0"
+echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
@@ -15,19 +20,27 @@ set -o xtrace
 # Settings
 # ========
 
-# Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd)
-source ./openrc
+# Keep track of the current directory
+EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
+
+# Import common functions
+source $TOP_DIR/functions
+
+# Import EC2 configuration
+source $TOP_DIR/eucarc
+
+# Import exercise configuration
+source $TOP_DIR/exerciserc
 
 # Remove old certificates
-rm -f cacert.pem
-rm -f cert.pem
-rm -f pk.pem
+rm -f $TOP_DIR/cacert.pem
+rm -f $TOP_DIR/cert.pem
+rm -f $TOP_DIR/pk.pem
 
 # Get Certificates
-nova x509-get-root-cert
-nova x509-create-cert
-popd
+nova x509-get-root-cert $TOP_DIR/cacert.pem
+nova x509-create-cert $TOP_DIR/pk.pem $TOP_DIR/cert.pem
 
 # Max time to wait for image to be registered
 REGISTER_TIMEOUT=${REGISTER_TIMEOUT:-15}
@@ -35,17 +48,23 @@ REGISTER_TIMEOUT=${REGISTER_TIMEOUT:-15}
 BUCKET=testbucket
 IMAGE=bundle.img
 truncate -s 5M /tmp/$IMAGE
-euca-bundle-image -i /tmp/$IMAGE
+euca-bundle-image -i /tmp/$IMAGE || die "Failure bundling image $IMAGE"
 
+euca-upload-bundle -b $BUCKET -m /tmp/$IMAGE.manifest.xml || die "Failure uploading bundle $IMAGE to $BUCKET"
 
-euca-upload-bundle -b $BUCKET -m /tmp/$IMAGE.manifest.xml
 AMI=`euca-register $BUCKET/$IMAGE.manifest.xml | cut -f2`
+die_if_not_set AMI "Failure registering $BUCKET/$IMAGE"
 
 # Wait for the image to become available
-if ! timeout $REGISTER_TIMEOUT sh -c "while euca-describe-images | grep '$AMI' | grep 'available'; do sleep 1; done"; then
+if ! timeout $REGISTER_TIMEOUT sh -c "while euca-describe-images | grep $AMI | grep -q available; do sleep 1; done"; then
     echo "Image $AMI not available within $REGISTER_TIMEOUT seconds"
     exit 1
 fi
 
 # Clean up
-euca-deregister $AMI
+euca-deregister $AMI || die "Failure deregistering $AMI"
+
+set +o xtrace
+echo "*********************************************************************"
+echo "SUCCESS: End DevStack Exercise: $0"
+echo "*********************************************************************"

@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 
-# Test OpenStack client enviroment variable handling
+# Test OpenStack client authentication aguemnts handling
 
 echo "*********************************************************************"
 echo "Begin DevStack Exercise: $0"
 echo "*********************************************************************"
-
-# Verify client workage
-VERIFY=${1:-""}
 
 # Settings
 # ========
@@ -35,16 +32,21 @@ unset NOVA_URL
 unset NOVA_USERNAME
 unset NOVA_VERSION
 
-for i in OS_TENANT_NAME OS_USERNAME OS_PASSWORD OS_AUTH_URL; do
-    is_set $i
-    if [[ $? -ne 0 ]]; then
-        echo "$i expected to be set"
-        ABORT=1
-    fi
-done
-if [[ -n "$ABORT" ]]; then
-    exit 1
-fi
+# Save the known variables for later
+export x_TENANT_NAME=$OS_TENANT_NAME
+export x_USERNAME=$OS_USERNAME
+export x_PASSWORD=$OS_PASSWORD
+export x_AUTH_URL=$OS_AUTH_URL
+
+#Unset the usual variables to force argument processing
+unset OS_TENANT_NAME
+unset OS_USERNAME
+unset OS_PASSWORD
+unset OS_AUTH_URL
+
+# Common authentication args
+TENANT_ARG="--os_tenant_name=$x_TENANT_NAME"
+ARGS="--os_username=$x_USERNAME --os_password=$x_PASSWORD --os_auth_url=$x_AUTH_URL"
 
 # Set global return
 RETURN=0
@@ -56,7 +58,7 @@ if [[ "$ENABLED_SERVICES" =~ "key" ]]; then
         STATUS_KEYSTONE="Skipped"
     else
         echo -e "\nTest Keystone"
-        if keystone catalog --service identity; then
+        if keystone $TENANT_ARG $ARGS catalog --service identity; then
             STATUS_KEYSTONE="Succeeded"
         else
             STATUS_KEYSTONE="Failed"
@@ -75,27 +77,12 @@ if [[ "$ENABLED_SERVICES" =~ "n-api" ]]; then
     else
         # Test OSAPI
         echo -e "\nTest Nova"
-        if nova flavor-list; then
+        if nova $TENANT_ARG $ARGS flavor-list; then
             STATUS_NOVA="Succeeded"
         else
             STATUS_NOVA="Failed"
             RETURN=1
         fi
-
-        # Test EC2 API
-        echo -e "\nTest EC2"
-        # Get EC2 creds
-        source $TOP_DIR/eucarc
-
-        if euca-describe-images; then
-            STATUS_EC2="Succeeded"
-        else
-            STATUS_EC2="Failed"
-            RETURN=1
-        fi
-
-        # Clean up side effects
-        unset NOVA_VERSION
     fi
 fi
 
@@ -107,7 +94,7 @@ if [[ "$ENABLED_SERVICES" =~ "g-api" ]]; then
         STATUS_GLANCE="Skipped"
     else
         echo -e "\nTest Glance"
-        if glance index; then
+        if glance $TENANT_ARG $ARGS index; then
             STATUS_GLANCE="Succeeded"
         else
             STATUS_GLANCE="Failed"
@@ -124,7 +111,7 @@ if [[ "$ENABLED_SERVICES" =~ "swift" ]]; then
         STATUS_SWIFT="Skipped"
     else
         echo -e "\nTest Swift"
-        if swift stat; then
+        if swift $ARGS stat; then
             STATUS_SWIFT="Succeeded"
         else
             STATUS_SWIFT="Failed"
@@ -145,7 +132,6 @@ function report() {
 echo -e "\n"
 report "Keystone" $STATUS_KEYSTONE
 report "Nova" $STATUS_NOVA
-report "EC2" $STATUS_EC2
 report "Glance" $STATUS_GLANCE
 report "Swift" $STATUS_SWIFT
 

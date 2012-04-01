@@ -21,7 +21,7 @@ if [ -e /usr/bin/vim ]; then
     ln -s /usr/bin/vim /bin/vi
 fi
 
-# Install git 
+# Install git
 if ! which git; then
     DEST=/tmp/
     GITDIR=$DEST/git-1.7.7
@@ -34,3 +34,8 @@ if ! which git; then
     make install
 fi
 
+# Clone devstack
+DEVSTACK=${DEVSTACKROOT:-"/root/devstack"}
+if [ ! -d $DEVSTACK ]; then
+    git clone git://github.com/openstack-dev/devstack.git $DEVSTACK
+fi

@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
+# **swift.sh**
+
 # Test swift via the command line tools that ship with it.
+
+echo "*********************************************************************"
+echo "Begin DevStack Exercise: $0"
+echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
@@ -14,31 +20,46 @@ set -o xtrace
 # Settings
 # ========
 
-# Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd)
-source ./openrc
-popd
+# Keep track of the current directory
+EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 
+# Import common functions
+source $TOP_DIR/functions
+
+# Import configuration
+source $TOP_DIR/openrc
+
+# Import exercise configuration
+source $TOP_DIR/exerciserc
+
+# Container name
+CONTAINER=ex-swift
+
+# If swift is not enabled we exit with exitcode 55 which mean
+# exercise is skipped.
+is_service_enabled swift || exit 55
 
 # Testing Swift
 # =============
 
-# FIXME(chmou): when review https://review.openstack.org/#change,3712
-# is merged we would be able to use the common openstack options and
-# remove the trailing slash to v2.0 auth url.
-#
 # Check if we have to swift via keystone
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD stat
+swift stat || die "Failure geting status"
 
 # We start by creating a test container
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD post testcontainer
+swift post $CONTAINER || die "Failure creating container $CONTAINER"
 
 # add some files into it.
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD upload testcontainer /etc/issue
+swift upload $CONTAINER /etc/issue || die "Failure uploading file to container $CONTAINER"
 
 # list them
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD list testcontainer
+swift list $CONTAINER || die "Failure listing contents of container $CONTAINER"
 
 # And we may want to delete them now that we have tested that
 # everything works.
-swift --auth-version 2 -A http://${HOST_IP}:5000/v2.0/ -U admin -K $ADMIN_PASSWORD delete testcontainer
+swift delete $CONTAINER || die "Failure deleting container $CONTAINER"
+
+set +o xtrace
+echo "*********************************************************************"
+echo "SUCCESS: End DevStack Exercise: $0"
+echo "*********************************************************************"

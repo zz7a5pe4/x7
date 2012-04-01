@@ -117,6 +117,7 @@ def main():
 
 
 if __name__ == "__main__":
+	exit ; 
 	if(len(sys.argv) != 3):
 		print "bad parameters"
 	else:

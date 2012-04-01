@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
+# **euca.sh**
+
 # we will use the ``euca2ools`` cli tool that wraps the python boto
 # library to test ec2 compatibility
-#
+
+echo "*********************************************************************"
+echo "Begin DevStack Exercise: $0"
+echo "*********************************************************************"
 
 # This script exits on an error so that errors don't compound and you see
 # only the first error that occured.
@@ -12,25 +17,29 @@ set -o errexit
 # an error.  It is also useful for following allowing as the install occurs.
 set -o xtrace
 
+
 # Settings
 # ========
 
-# Use openrc + stackrc + localrc for settings
-pushd $(cd $(dirname "$0")/.. && pwd)
-source ./openrc
-popd
+# Keep track of the current directory
+EXERCISE_DIR=$(cd $(dirname "$0") && pwd)
+TOP_DIR=$(cd $EXERCISE_DIR/..; pwd)
 
-# Max time to wait while vm goes from build to active state
-ACTIVE_TIMEOUT=${ACTIVE_TIMEOUT:-30}
+# Import common functions
+source $TOP_DIR/functions
 
-# Max time till the vm is bootable
-BOOT_TIMEOUT=${BOOT_TIMEOUT:-30}
+# Import EC2 configuration
+source $TOP_DIR/eucarc
 
-# Max time to wait for proper association and dis-association.
-ASSOCIATE_TIMEOUT=${ASSOCIATE_TIMEOUT:-15}
+# Import exercise configuration
+source $TOP_DIR/exerciserc
 
 # Instance type to create
 DEFAULT_INSTANCE_TYPE=${DEFAULT_INSTANCE_TYPE:-m1.tiny}
+
+
+# Launching a server
+# ==================
 
 # Find a machine image to boot
 IMAGE=`euca-describe-images | grep machine | cut -f2 | head -n1`
@@ -49,6 +58,7 @@ fi
 
 # Launch it
 INSTANCE=`euca-run-instances -g $SECGROUP -t $DEFAULT_INSTANCE_TYPE $IMAGE | grep INSTANCE | cut -f2`
+die_if_not_set INSTANCE "Failure launching instance"
 
 # Assure it has booted within a reasonable time
 if ! timeout $RUNNING_TIMEOUT sh -c "while ! euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then
@@ -58,12 +68,15 @@ fi
 
 # Allocate floating address
 FLOATING_IP=`euca-allocate-address | cut -f2`
+die_if_not_set FLOATING_IP "Failure allocating floating IP"
 
 # Associate floating address
-euca-associate-address -i $INSTANCE $FLOATING_IP
+euca-associate-address -i $INSTANCE $FLOATING_IP || \
+    die "Failure associating address $FLOATING_IP to $INSTANCE"
 
 # Authorize pinging
-euca-authorize -P icmp -s 0.0.0.0/0 -t -1:-1 $SECGROUP
+euca-authorize -P icmp -s 0.0.0.0/0 -t -1:-1 $SECGROUP || \
+    die "Failure authorizing rule in $SECGROUP"
 
 # Test we can ping our floating ip within ASSOCIATE_TIMEOUT seconds
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sleep 1; done"; then
@@ -72,10 +85,12 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while ! ping -c1 -w1 $FLOATING_IP; do sle
 fi
 
 # Revoke pinging
-euca-revoke -P icmp -s 0.0.0.0/0 -t -1:-1 $SECGROUP
+euca-revoke -P icmp -s 0.0.0.0/0 -t -1:-1 $SECGROUP || \
+    die "Failure revoking rule in $SECGROUP"
 
 # Release floating address
-euca-disassociate-address $FLOATING_IP
+euca-disassociate-address $FLOATING_IP || \
+    die "Failure disassociating address $FLOATING_IP"
 
 # Wait just a tick for everything above to complete so release doesn't fail
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while euca-describe-addresses | grep $INSTANCE | grep -q $FLOATING_IP; do sleep 1; done"; then
@@ -84,7 +99,8 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while euca-describe-addresses | grep $INS
 fi
 
 # Release floating address
-euca-release-address $FLOATING_IP
+euca-release-address $FLOATING_IP || \
+    die "Failure releasing address $FLOATING_IP"
 
 # Wait just a tick for everything above to complete so terminate doesn't fail
 if ! timeout $ASSOCIATE_TIMEOUT sh -c "while euca-describe-addresses | grep -q $FLOATING_IP; do sleep 1; done"; then
@@ -93,7 +109,8 @@ if ! timeout $ASSOCIATE_TIMEOUT sh -c "while euca-describe-addresses | grep -q $
 fi
 
 # Terminate instance
-euca-terminate-instances $INSTANCE
+euca-terminate-instances $INSTANCE || \
+    die "Failure terminating instance $INSTANCE"
 
 # Assure it has terminated within a reasonable time
 if ! timeout $TERMINATE_TIMEOUT sh -c "while euca-describe-instances $INSTANCE | grep -q running; do sleep 1; done"; then
@@ -102,4 +119,10 @@ if ! timeout $TERMINATE_TIMEOUT sh -c "while euca-describe-instances $INSTANCE |
 fi
 
 # Delete group
-euca-delete-group $SECGROUP
+euca-delete-group $SECGROUP || \
+    die "Failure deleting security group $SECGROUP"
+
+set +o xtrace
+echo "*********************************************************************"
+echo "SUCCESS: End DevStack Exercise: $0"
+echo "*********************************************************************"
