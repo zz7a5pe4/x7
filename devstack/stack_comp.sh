@@ -1169,10 +1169,11 @@ function add_nova_flag {
 
 # remove legacy nova.conf
 rm -f $NOVA_DIR/bin/nova.conf
-
+mkdir -p /tmp/nova
 # (re)create nova.conf
 rm -f $NOVA_CONF/nova.conf
-add_nova_flag "--verbose"
+#add_nova_flag "--verbose"
+add_nova_flag "--logdir=/tmp/nova"
 add_nova_flag "--allow_admin_api"
 add_nova_flag "--scheduler_driver=$SCHEDULER"
 add_nova_flag "--dhcpbridge_flagfile=$NOVA_CONF/nova.conf"
